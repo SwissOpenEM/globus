@@ -1,19 +1,25 @@
 package globus
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 )
 
 const transferBaseUrl = "https://transfer.api.globusonline.org/v0.10"
 
+// helper funcs.
+
+func boolPointer(v bool) *bool { return &v }
+
+//func stringPointer(v string) *string { return &v }
+
 // request structures
 
 type TransferItem struct {
-	DataType        string `json:"DATA_TYPE"` // can be either "tranfer_item" OR "transfer_symlink_item"
+	DataType        string `json:"DATA_TYPE"` // = "tranfer_item" OR "transfer_symlink_item"
 	SourcePath      string `json:"source_path"`
 	DestinationPath string `json:"destination_path"`
 	// optionals
@@ -37,8 +43,8 @@ type FilterRule struct {
 type CommonTransfer struct {
 	DataType     string `json:"DATA_TYPE"` // = transfer OR delete
 	SubmissionId string `json:"submission_id"`
-	Label        string `json:"label,omitempty"`
 	// optional fields
+	Label               *string `json:"label,omitempty"`
 	NotifyOnSucceeded   *bool   `json:"notify_on_succeeded,omitempty"`
 	NotifyOnFailed      *bool   `json:"notify_on_failed,omitempty"`
 	NotifyOnInactive    *bool   `json:"notify_on_inactive,omitempty"`
@@ -87,65 +93,107 @@ type SubmissionId struct {
 	Value    string `json:"value"`
 }
 
-type Link struct {
-	DataType string `json:"DATA_TYPE"`
-	Href     string `json:"href"`
-	Rel      string `json:"rel"`
-	Resource string `json:"resource"`
-	Title    string `json:"title"`
-}
-
 type TransferResult struct {
 	DataType     string `json:"DATA_TYPE"`
-	Code         string `json:"code"`
-	RequestId    string `json:"requst_id"`
-	Resource     string `json:"resource"`
-	SubmissionId string `json:"submission_id"`
 	TaskId       string `json:"task_id"`
-	TaskLink     Link   `json:"task_link"`
+	SubmissionId string `json:"submission_id"`
+	Code         string `json:"code"`
+	Message      string `json:"message"`
+	Resource     string `json:"resource"`
+	RequestId    string `json:"requst_id"`
 }
 
-func TransferSubmitTask(client *http.Client, sourceEndpoint string, sourcePath string, destEndpoint string, destPath string) (err error) {
-	// get submission id for submission
+func getSubmissionId(client *http.Client) (submissionId string, err error) {
 	resp, err := client.Get(transferBaseUrl + "/submission_id")
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	if resp.StatusCode != 200 || resp.Status != "OK" {
-		return fmt.Errorf("unexpected status for submission id request: %d '%s' - %s", resp.StatusCode, resp.Status, string(body))
+	if resp.StatusCode != 200 || resp.Status != "200 OK" {
+		return "", fmt.Errorf("unexpected status for submission id request: %d '%s' - %s", resp.StatusCode, resp.Status, string(body))
 	}
 
 	var result SubmissionId
 	if err := json.Unmarshal(body, &result); err != nil {
-		return fmt.Errorf("could not parse response for submission id request")
+		return "", fmt.Errorf("could not parse response for submission id request")
 	}
 	if result.DataType != "submission_id" {
-		return fmt.Errorf("incorrect value type returned for submission id request: %s", result.DataType)
+		return "", fmt.Errorf("incorrect value type returned for submission id request: %s", result.DataType)
 	}
 
-	submission_id := result.Value
+	return result.Value, nil
+}
 
-	// submit request
+// Submits a generic transfer request using a Transfer struct.
+// This function doesn't check whether the transfer struct is valid.
+// You don't need to set the submission id of the transfer, this function does that for you.
+func TransferSubmitGenericTask(client *http.Client, transfer Transfer) (result TransferResult, err error) {
+	// get submission id for submission
+	submission_id, err := getSubmissionId(client)
+	if err != nil {
+		return TransferResult{}, err
+	}
 
-	resp, err = client.Post(
+	// formulate request
+	transfer.CommonTransfer.SubmissionId = submission_id
+
+	transferJSON, err := json.Marshal(transfer)
+	if err != nil {
+		return TransferResult{}, err
+	}
+
+	// send request
+	resp, err := client.Post(
 		transferBaseUrl+"/transfer",
-		"Content-Type: application/json",
-		strings.NewReader(""),
+		"application/json",
+		bytes.NewBuffer(transferJSON),
 	)
 	if err != nil {
-		return err
+		return TransferResult{}, err
 	}
 	defer resp.Body.Close()
 
-	// TOOD: AND FINISH THIS!!!
+	fmt.Printf("Transfer req - status: %s\n", resp.Status)
 
-	return nil
+	// read & return response
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return TransferResult{}, err
+	}
+
+	json.Unmarshal(body, &result)
+
+	return result, nil
+}
+
+// submits a transfer task to copy a folder recursively.
+// NOTE: all
+func TransferFolderSync(client *http.Client, sourceEndpoint string, sourcePath string, destEndpoint string, destPath string) (TransferResult, error) {
+	// formulate request
+	transfer := Transfer{
+		CommonTransfer: CommonTransfer{
+			DataType:     "transfer",
+			SubmissionId: "",
+		},
+		SourceEndpoint:      sourceEndpoint,
+		DestinationEndpoint: destEndpoint,
+		Data: []TransferItem{
+			{
+				DataType:        "transfer_item",
+				SourcePath:      sourcePath,
+				DestinationPath: destPath,
+				Recursive:       boolPointer(true),
+			},
+		},
+	}
+
+	// submit request
+	return TransferSubmitGenericTask(client, transfer)
 }
 
 func TransferListTasks(client *http.Client) {

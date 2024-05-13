@@ -104,6 +104,10 @@ type TransferResult struct {
 }
 
 func getSubmissionId(client *http.Client) (submissionId string, err error) {
+	if client == nil {
+		return "", fmt.Errorf("client is nil.")
+	}
+
 	resp, err := client.Get(transferBaseUrl + "/submission_id")
 	if err != nil {
 		return "", err

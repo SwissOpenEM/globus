@@ -30,10 +30,7 @@ func main() {
 	// multiple tokens for different endpoints with the first one being the "default".
 	// To get a client that works with transfers while using a standard oauth2 library, we
 	// need to exclusively specify the scopes that are associated with the transfer api.
-	scopes := []string{
-		fmt.Sprintf("urn:globus:auth:scope:transfer.api.globus.org:all[*https://auth.globus.org/scopes/%s/data_access]", *srcEndpoint),
-		fmt.Sprintf("urn:globus:auth:scope:transfer.api.globus.org:all[*https://auth.globus.org/scopes/%s/data_access]", *destEndpoint),
-	}
+	scopes := globus.TransferDataAccessScopeCreator([]string{*srcEndpoint, *destEndpoint})
 
 	// Authenticate
 	ctx := context.Background()

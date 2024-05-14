@@ -8,7 +8,8 @@ import (
 	"net/http"
 )
 
-const transferBaseUrl = "https://transfer.api.globusonline.org/v0.10"
+const globusTransferDomain = "https://transfer.api.globusonline.org"
+const transferBaseUrl = globusTransferDomain + "/v0.10"
 
 // helper funcs.
 
@@ -103,9 +104,77 @@ type TransferResult struct {
 	RequestId    string `json:"requst_id"`
 }
 
+type FatalError struct {
+	Code        string `json:"code"`
+	Description string `json:"description"`
+}
+
+// TODO: confirm that this works correctly with replies
+type Task struct {
+	DataType                       string        `json:"DATA_TYPE"`
+	TaskId                         string        `json:"task_id"`
+	Type                           string        `json:"type"`
+	Status                         string        `json:"status"`
+	FatalError                     *FatalError   `json:"fatal_error,omitempty"`
+	Label                          string        `json:"label"`
+	OwnerId                        string        `json:"owner_id"`
+	RequestTime                    string        `json:"request_time"`              // ISO8601
+	CompletionTime                 *string       `json:"completion_time,omitempty"` // null if hasn't finished
+	Deadline                       string        `json:"deadline"`
+	SourceEndpointId               string        `json:"source_endpoint_id"`
+	SourceEndpointDisplayName      string        `json:"source_endpoint_display_name"`
+	DestinationEndpointId          *string       `json:"destination_endpoint_id,omitempty"` // null for delete tasks
+	DestinationEndpointDisplayName *string       `json:"destination_endpoint_display_name,omitempty"`
+	SyncLevel                      *int          `json:"sync_level,omitempty"`
+	EncryptData                    bool          `json:"encrypt_data"`
+	VerifyChecksum                 bool          `json:"verify_checksum"`
+	DeleteDestinationExtra         bool          `json:"delete_destination_extra"`
+	RecursiveSymlinks              *string       `json:"recursive_symlinks,omitempty"` // always null for delete tasks
+	PreserveTimestamp              bool          `json:"preserve_timestamp"`
+	SkipSourceErrors               bool          `json:"skip_source_errors"`
+	FailOnQuotaErrors              bool          `json:"fail_on_quota_errors"`
+	Command                        string        `json:"command"`
+	HistoryDeleted                 bool          `json:"history_deleted"`
+	Faults                         int           `json:"faults"`
+	Files                          int           `json:"files"`       // no. of files affected by task (can grow w/ recursion)
+	Directories                    int           `json:"directories"` // no. of directories affected by task (can grow w/ recursion)
+	Symlinks                       int           `json:"symlinks"`    // no. of *kept* symlinks
+	FilesSkipped                   *int          `json:"files_skipped,omitempty"`
+	FilesTransferred               int           `json:"files_transferred"`
+	SubtasksTotal                  int           `json:"subtasks_total"`
+	SubtasksPending                int           `json:"subtasks_pending"`
+	SubtasksRetrying               int           `json:"subtasks_retrying"`
+	SubtasksSucceeded              int           `json:"subtasks_succeeded"`
+	SubtasksExpired                int           `json:"subtasks_expired"`
+	SubtasksCanceled               int           `json:"subtasks_canceled"`
+	SubtasksFailed                 int           `json:"subtasks_failed"`
+	SubtasksSkippedErrors          int           `json:"subtasks_skipped_errors"`
+	BytesTransferred               int           `json:"bytes_transferred"`
+	BytesChecksummed               int           `json:"bytes_checksummed"`
+	EffectiveBytesPerSecond        int           `json:"effective_bytes_per_second"`
+	NiceStatus                     *string       `json:"nice_status,omitempty"` // "OK" or "Queued" -> task is fine, otherwise some error
+	NiceStatusShortDescription     string        `json:"nice_status_short_description"`
+	NiceStatusExpiresIn            string        `json:"nice_status_expires_in"`
+	CanceledByAdmin                *string       `json:"canceled_by_admin,omitempty"` // if the task was canceled by either collection's activity manager, otherwise null
+	CanceledByAdminMessage         string        `json:"canceled_by_admin_message"`   // contains the message of cancelation set by activity manager
+	IsPaused                       bool          `json:"is_paused"`
+	FilterRules                    *[]FilterRule `json:"filter_rules,omitempty"` // can be null
+	SourceLocalUser                *string       `json:"source_local_user,omitempty"`
+	SourceLocalUserStatus          string        `json:"source_local_user_status"`
+	DestinationLocalUser           *string       `json:"destination_local_user,omitempty"`
+	DestinationLocalUserStatus     string        `json:"destination_local_user_status"`
+	SourceBasePath                 *string       `json:"source_base_path,omitempty"`
+	DestinationBasePath            *string       `json:"destination_base_path,omitempty"`
+
+	// deprecated fields:
+	//SourceEndpoint string `json:"source_endpoint`
+	//Username string `json:"username"`
+	//NiceStatusDetails string `json:"nice_status_details"`
+}
+
 func getSubmissionId(client *http.Client) (submissionId string, err error) {
 	if client == nil {
-		return "", fmt.Errorf("client is nil.")
+		return "", fmt.Errorf("client is nil")
 	}
 
 	resp, err := client.Get(transferBaseUrl + "/submission_id")
@@ -136,7 +205,7 @@ func getSubmissionId(client *http.Client) (submissionId string, err error) {
 // Submits a generic transfer request using a Transfer struct.
 // This function doesn't check whether the transfer struct is valid.
 // You don't need to set the submission id of the transfer, this function does that for you.
-func TransferSubmitGenericTask(client *http.Client, transfer Transfer) (result TransferResult, err error) {
+func TransferPostTask(client *http.Client, transfer Transfer) (result TransferResult, err error) {
 	// get submission id for submission
 	submission_id, err := getSubmissionId(client)
 	if err != nil {
@@ -175,8 +244,31 @@ func TransferSubmitGenericTask(client *http.Client, transfer Transfer) (result T
 	return result, nil
 }
 
+// TODO: test this function
+func TransferGetTaskByID(client *http.Client, taskID string) (task Task, err error) {
+	resp, err := client.Get(transferBaseUrl + "/task/" + taskID)
+	if err != nil {
+		return Task{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return Task{}, fmt.Errorf("Not-OK Status: %d - %s", resp.StatusCode, resp.Status)
+	}
+
+	// read & return response
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return Task{}, err
+	}
+
+	json.Unmarshal(body, &task)
+
+	return task, nil
+}
+
 // submits a transfer task to copy a folder recursively.
-// NOTE: all
+// NOTE: the transfer follows all default params (aside from recursivity)
 func TransferFolderSync(client *http.Client, sourceEndpoint string, sourcePath string, destEndpoint string, destPath string) (TransferResult, error) {
 	// formulate request
 	transfer := Transfer{
@@ -197,9 +289,21 @@ func TransferFolderSync(client *http.Client, sourceEndpoint string, sourcePath s
 	}
 
 	// submit request
-	return TransferSubmitGenericTask(client, transfer)
+	return TransferPostTask(client, transfer)
 }
 
 func TransferListTasks(client *http.Client) {
 	client.Get(transferBaseUrl + "/task_list")
+}
+
+// creates a list of scopes to access data on the specified Globus endpoints
+func TransferDataAccessScopeCreator(collectionIDs []string) (scopes []string) {
+	for _, collectionID := range collectionIDs {
+		if collectionID == "" {
+			continue
+		}
+		scopes = append(scopes, "urn:globus:auth:scope:"+globusTransferDomain+":all[*https://auth.globus.org/scopes/"+collectionID+"/data_access]")
+	}
+
+	return scopes
 }

@@ -8,8 +8,7 @@ import (
 	"net/http"
 )
 
-const globusTransferDomain = "https://transfer.api.globusonline.org"
-const transferBaseUrl = globusTransferDomain + "/v0.10"
+const transferBaseUrl = "https://transfer.api.globusonline.org/v0.10"
 
 // helper funcs.
 
@@ -154,7 +153,7 @@ type Task struct {
 	EffectiveBytesPerSecond        int           `json:"effective_bytes_per_second"`
 	NiceStatus                     *string       `json:"nice_status,omitempty"` // "OK" or "Queued" -> task is fine, otherwise some error
 	NiceStatusShortDescription     string        `json:"nice_status_short_description"`
-	NiceStatusExpiresIn            string        `json:"nice_status_expires_in"`
+	NiceStatusExpiresIn            int           `json:"nice_status_expires_in"`
 	CanceledByAdmin                *string       `json:"canceled_by_admin,omitempty"` // if the task was canceled by either collection's activity manager, otherwise null
 	CanceledByAdminMessage         string        `json:"canceled_by_admin_message"`   // contains the message of cancelation set by activity manager
 	IsPaused                       bool          `json:"is_paused"`
@@ -170,6 +169,23 @@ type Task struct {
 	//SourceEndpoint string `json:"source_endpoint`
 	//Username string `json:"username"`
 	//NiceStatusDetails string `json:"nice_status_details"`
+}
+
+type TaskList struct {
+	DataType string `json:"DATA_TYPE"`
+	Length   int    `json:"length"`
+	Limit    int    `json:"limit"`
+	Offset   int    `json:"offset"`
+	Total    int    `json:"total"`
+	Data     []Task `json:"Data"`
+}
+
+type Result struct {
+	DataType  string `json:"DATA_TYPE"`
+	Code      string `json:"code"`
+	Message   string `json:"message"`
+	RequestId string `json:"request_id"`
+	Resource  string `json:"resource"`
 }
 
 func getSubmissionId(client *http.Client) (submissionId string, err error) {
@@ -239,9 +255,40 @@ func TransferPostTask(client *http.Client, transfer Transfer) (result TransferRe
 		return TransferResult{}, err
 	}
 
-	json.Unmarshal(body, &result)
+	err = json.Unmarshal(body, &result)
+	return result, err
+}
 
-	return result, nil
+// fetches a list of transfer tasks from Globus Transfer API
+// NOTE: the results are paginated using "offset" and "limit"
+func TransferGetTaskList(client *http.Client, offset uint, limit uint) (taskList TaskList, err error) {
+	req, err := http.NewRequest(http.MethodGet, transferBaseUrl+"/task_list", nil)
+	if err != nil {
+		return TaskList{}, err
+	}
+
+	q := req.URL.Query()
+	q.Add("offset", fmt.Sprint(offset))
+	q.Add("limit", fmt.Sprint(limit))
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return TaskList{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return TaskList{}, fmt.Errorf("Non-Successful Status: %d - %s", resp.StatusCode, resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return TaskList{}, err
+	}
+
+	err = json.Unmarshal(body, &taskList)
+	return taskList, err
 }
 
 // TODO: test this function
@@ -252,8 +299,8 @@ func TransferGetTaskByID(client *http.Client, taskID string) (task Task, err err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return Task{}, fmt.Errorf("Not-OK Status: %d - %s", resp.StatusCode, resp.Status)
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return Task{}, fmt.Errorf("Non-Successful Status: %d - %s", resp.StatusCode, resp.Status)
 	}
 
 	// read & return response
@@ -262,9 +309,55 @@ func TransferGetTaskByID(client *http.Client, taskID string) (task Task, err err
 		return Task{}, err
 	}
 
-	json.Unmarshal(body, &task)
+	err = json.Unmarshal(body, &task)
+	return task, err
+}
 
-	return task, nil
+// test this as well
+func TransferCancelTaskByID(client *http.Client, taskID string) (result Result, err error) {
+	req, err := http.NewRequest(http.MethodPut, transferBaseUrl+"/task/"+taskID+"/cancel", nil)
+	if err != nil {
+		return Result{}, err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return Result{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return Result{}, fmt.Errorf("Non-Successful Status: %d - %s", resp.StatusCode, resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return Result{}, err
+	}
+
+	err = json.Unmarshal(body, &result)
+	return result, err
+}
+
+// test this as well
+func TransferRemoveTaskByID(client *http.Client, taskID string) (result Result, err error) {
+	resp, err := client.Post(transferBaseUrl+"/task/"+taskID+"/remove", "", nil)
+	if err != nil {
+		return Result{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return Result{}, fmt.Errorf("Non-Successful Status: %d - %s", resp.StatusCode, resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return Result{}, err
+	}
+
+	err = json.Unmarshal(body, &result)
+	return result, err
 }
 
 // submits a transfer task to copy a folder recursively.
@@ -302,7 +395,7 @@ func TransferDataAccessScopeCreator(collectionIDs []string) (scopes []string) {
 		if collectionID == "" {
 			continue
 		}
-		scopes = append(scopes, "urn:globus:auth:scope:"+globusTransferDomain+":all[*https://auth.globus.org/scopes/"+collectionID+"/data_access]")
+		scopes = append(scopes, "urn:globus:auth:scope:transfer.api.globus.org:all[*https://auth.globus.org/scopes/"+collectionID+"/data_access]")
 	}
 
 	return scopes

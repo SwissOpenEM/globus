@@ -4,14 +4,11 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/SwissOpenEM/globus-transfer-request"
 	"github.com/spf13/cobra"
-	"golang.org/x/oauth2"
 )
 
 // getTaskByIdCmd represents the getTaskById command
@@ -38,52 +35,11 @@ var getTaskByIdCmd = &cobra.Command{
 			"urn:globus:auth:scope:transfer.api.globus.org:all",
 		}
 
-		ctx := context.Background()
-		var client *http.Client = nil
-		if authCodeGrant {
-			// 3-legged OAuth2 authentication - client software authenticates as a user
-
-			// on https://app.globus.org/settings/developers/, you must select "Register a thick client or
-			// script that will be installed and run by users on their devices" as registration type
-
-			// create config
-			conf := globus.AuthGenerateOauthClientConfig(ctx, clientID, clientSecret, authURL, scopes)
-
-			// PKCE verifier
-			verifier := oauth2.GenerateVerifier()
-
-			// redirect user to consent page to ask for permission and obtain the code
-			url := conf.AuthCodeURL("state", oauth2.AccessTypeOffline, oauth2.S256ChallengeOption(verifier))
-			fmt.Printf("Visit the URL for the auth dialog: %v", url)
-
-			// read-in and exchange code for token
-			var code string
-			if _, err := fmt.Scan(&code); err != nil {
-				log.Fatal(err)
-			}
-			tok, err := conf.Exchange(ctx, code, oauth2.VerifierOption(verifier))
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// create client
-			client = conf.Client(ctx, tok)
-		} else {
-			// 2-legged OAuth2 authentication - client software authenticates as itself
-
-			// on https://app.globus.org/settings/developers/, you must select "Register a service account or
-			// application for automation" as registration type
-
-			// create client
-			var err error
-			client, err = globus.AuthCreateServiceClient(ctx, clientID, clientSecret, scopes)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if client == nil {
-				log.Fatal("AUTH error: Client is nil\n")
-			}
+		client, err := login(authCodeGrant, clientID, clientSecret, authURL, scopes)
+		if err != nil {
+			log.Fatal(err)
 		}
+
 		// get task by id
 		transfer, err := globus.TransferGetTaskByID(client, taskId)
 		if err != nil {

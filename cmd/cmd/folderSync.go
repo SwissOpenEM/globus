@@ -4,20 +4,16 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"context"
-	"flag"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/SwissOpenEM/globus-transfer-request"
 	"github.com/spf13/cobra"
-	"golang.org/x/oauth2"
 )
 
 // folderSyncCmd represents the folderSync command
 var folderSyncCmd = &cobra.Command{
-	Use:   "folderSync",
+	Use:   "folderSync [flags]",
 	Short: "Syncs (copies) a folder between two Globus endpoints",
 	Long: `
 This command will copy all files that are in a source 
@@ -37,8 +33,6 @@ have the same checksum will not be copied.`,
 		destEndpoint, _ := cmd.Flags().GetString("dest-endpoint")
 		destPath, _ := cmd.Flags().GetString("dest-path")
 
-		flag.Parse()
-
 		// note: Globus has some non-standard extensions to Oauth2, meaning that it can give out
 		// multiple tokens for different endpoints with the first one being the "default".
 		// To get a client that works with transfers while using a standard oauth2 library, we
@@ -46,51 +40,9 @@ have the same checksum will not be copied.`,
 		scopes := globus.TransferDataAccessScopeCreator([]string{srcEndpoint, destEndpoint})
 
 		// Authenticate
-		ctx := context.Background()
-		var client *http.Client = nil
-		if authCodeGrant {
-			// 3-legged OAuth2 authentication - client software authenticates as a user
-
-			// on https://app.globus.org/settings/developers/, you must select "Register a thick client or
-			// script that will be installed and run by users on their devices" as registration type
-
-			// create config
-			conf := globus.AuthGenerateOauthClientConfig(ctx, clientID, clientSecret, authURL, scopes)
-
-			// PKCE verifier
-			verifier := oauth2.GenerateVerifier()
-
-			// redirect user to consent page to ask for permission and obtain the code
-			url := conf.AuthCodeURL("state", oauth2.AccessTypeOffline, oauth2.S256ChallengeOption(verifier))
-			fmt.Printf("Visit the URL for the auth dialog: %v", url)
-
-			// read-in and exchange code for token
-			var code string
-			if _, err := fmt.Scan(&code); err != nil {
-				log.Fatal(err)
-			}
-			tok, err := conf.Exchange(ctx, code, oauth2.VerifierOption(verifier))
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// create client
-			client = conf.Client(ctx, tok)
-		} else {
-			// 2-legged OAuth2 authentication - client software authenticates as itself
-
-			// on https://app.globus.org/settings/developers/, you must select "Register a service account or
-			// application for automation" as registration type
-
-			// create client
-			var err error
-			client, err = globus.AuthCreateServiceClient(ctx, clientID, clientSecret, scopes)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if client == nil {
-				log.Fatal("AUTH error: Client is nil\n")
-			}
+		client, err := login(authCodeGrant, clientID, clientSecret, authURL, scopes)
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		// Transfer - Sync folders

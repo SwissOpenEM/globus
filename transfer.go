@@ -291,7 +291,7 @@ func TransferGetTaskList(client *http.Client, offset uint, limit uint) (taskList
 	return taskList, err
 }
 
-// TODO: test this function
+// fetches a specific transfer task from Globus Transfer API by its ID
 func TransferGetTaskByID(client *http.Client, taskID string) (task Task, err error) {
 	resp, err := client.Get(transferBaseUrl + "/task/" + taskID)
 	if err != nil {
@@ -315,12 +315,7 @@ func TransferGetTaskByID(client *http.Client, taskID string) (task Task, err err
 
 // test this as well
 func TransferCancelTaskByID(client *http.Client, taskID string) (result Result, err error) {
-	req, err := http.NewRequest(http.MethodPut, transferBaseUrl+"/task/"+taskID+"/cancel", nil)
-	if err != nil {
-		return Result{}, err
-	}
-
-	resp, err := client.Do(req)
+	resp, err := client.Post(transferBaseUrl+"/task/"+taskID+"/cancel", "", nil)
 	if err != nil {
 		return Result{}, err
 	}

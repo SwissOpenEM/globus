@@ -313,7 +313,7 @@ func TransferGetTaskByID(client *http.Client, taskID string) (task Task, err err
 	return task, err
 }
 
-// test this as well
+// cancels a task using its id
 func TransferCancelTaskByID(client *http.Client, taskID string) (result Result, err error) {
 	resp, err := client.Post(transferBaseUrl+"/task/"+taskID+"/cancel", "", nil)
 	if err != nil {

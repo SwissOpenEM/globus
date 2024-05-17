@@ -188,6 +188,23 @@ type Result struct {
 	Resource  string `json:"resource"`
 }
 
+type Event struct {
+	DataType    string `json:"DATA_TYPE"`
+	Code        string `json:"code"`
+	Description string `json:"description"`
+	Details     string `json:"details"`
+	IsError     bool   `json:"is_error"`
+	Time        string `json:"time"`
+}
+
+type EventList struct {
+	Data     []Event `json:"DATA"`
+	DataType string  `json:"DATA_TYPE"`
+	Limit    uint    `json:"limit"`
+	Offset   uint    `json:"offset"`
+	Total    uint    `json:"total"`
+}
+
 func getSubmissionId(client *http.Client) (submissionId string, err error) {
 	if client == nil {
 		return "", fmt.Errorf("client is nil")
@@ -355,6 +372,26 @@ func TransferRemoveTaskByID(client *http.Client, taskID string) (result Result, 
 
 	err = json.Unmarshal(body, &result)
 	return result, err
+}
+
+func TransferGetTaskEventList(client *http.Client, taskID string, offset uint, limit uint) (eventList EventList, err error) {
+	resp, err := client.Get(transferBaseUrl + "/task/" + taskID + "/event_list")
+	if err != nil {
+		return EventList{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return EventList{}, fmt.Errorf("Non-Successful Status: %d - %s", resp.StatusCode, resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return EventList{}, err
+	}
+
+	err = json.Unmarshal(body, &eventList)
+	return eventList, err
 }
 
 // submits a transfer task to copy a folder recursively.

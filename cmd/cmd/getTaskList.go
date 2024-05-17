@@ -25,6 +25,25 @@ a raw struct.`,
 		clientID, _ := cmd.Flags().GetString("client-id")
 		clientSecret, _ := cmd.Flags().GetString("client-secret")
 		authURL, _ := cmd.Flags().GetString("auth-url")
+		limit, _ := cmd.Flags().GetUint("limit")
+
+		if limit < 1 {
+			log.Fatal(fmt.Errorf("limit can't be less than 1"))
+		}
+
+		var offset uint
+		if cmd.Flags().Lookup("page").Changed {
+			if cmd.Flags().Lookup("offset").Changed {
+				log.Fatal(fmt.Errorf("both page and offset are specified at the same time"))
+			}
+			offset, _ = cmd.Flags().GetUint("page")
+			if offset == 0 {
+				offset += 1
+			}
+			offset = (offset - 1) * limit
+		} else {
+			offset, _ = cmd.Flags().GetUint("offset")
+		}
 
 		scopes := []string{
 			"urn:globus:auth:scope:transfer.api.globus.org:all",
@@ -36,7 +55,7 @@ a raw struct.`,
 		}
 
 		// get task list
-		transferList, err := globus.TransferGetTaskList(client, 0, 50)
+		transferList, err := globus.TransferGetTaskList(client, offset, limit)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -57,7 +76,12 @@ func init() {
 	getTaskListCmd.Flags().String("client-secret", "", "set client secret of application")
 	getTaskListCmd.Flags().String("auth-url", "", "set auth url (only used in three-legged mode)")
 
+	getTaskListCmd.Flags().Uint("offset", 0, "set the initial offset of the list for pagination (can't use with page)")
+	getTaskListCmd.Flags().Uint("limit", 50, "set the max. size of the requested list")
+	getTaskListCmd.Flags().Uint("page", 1, "set the page on the task list (can't use with offset)")
+
 	getTaskListCmd.MarkFlagRequired("client-id")
 	getTaskListCmd.MarkFlagRequired("client-secret")
 	getTaskListCmd.MarkFlagsRequiredTogether("auth-code-grant", "auth-url")
+	getTaskListCmd.MarkFlagsMutuallyExclusive("offset", "page")
 }

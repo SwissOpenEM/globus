@@ -334,7 +334,9 @@ func TransferCancelTaskByID(client *http.Client, taskID string) (result Result, 
 	return result, err
 }
 
-// test this as well
+// removes a globus task
+// NOTE: this can be only used under specific conditions: task must be associated with a
+// a high assurance collection, must be either SUCCEEDED or FAILED.
 func TransferRemoveTaskByID(client *http.Client, taskID string) (result Result, err error) {
 	resp, err := client.Post(transferBaseUrl+"/task/"+taskID+"/remove", "", nil)
 	if err != nil {

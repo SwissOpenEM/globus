@@ -16,9 +16,9 @@ var getTaskByIdCmd = &cobra.Command{
 	Use:   "getTaskById [flags] task_id",
 	Short: "retrieve a task's details by its id",
 	Long: `
-	This command retrieves the task struct of a task by
-	its id. It can only request tasks to which the 
-	authenticated user has access to.`,
+This command retrieves the task struct of a task by
+its id. It can only request tasks to which the 
+authenticated user has access to.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		authCodeGrant, _ := cmd.Flags().GetBool("auth-code-grant")

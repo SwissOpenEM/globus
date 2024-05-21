@@ -31,6 +31,7 @@ a raw struct.`,
 			log.Fatal(fmt.Errorf("limit can't be less than 1"))
 		}
 
+		// get offset - either by page number or directly specified offset
 		var offset uint
 		if cmd.Flags().Lookup("page").Changed {
 			if cmd.Flags().Lookup("offset").Changed {
@@ -45,6 +46,7 @@ a raw struct.`,
 			offset, _ = cmd.Flags().GetUint("offset")
 		}
 
+		// login
 		scopes := []string{
 			"urn:globus:auth:scope:transfer.api.globus.org:all",
 		}

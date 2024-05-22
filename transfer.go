@@ -205,7 +205,7 @@ func TransferGetTaskEventList(client *http.Client, taskID string, offset uint, l
 	return eventList, err
 }
 
-// TODO: test!
+// retrieve the list of successfully transfered files of a task
 func TransferGetTaskSuccessfulTransfers(client *http.Client, taskID string, marker uint) (transfers SuccessfulTransfers, err error) {
 	req, err := http.NewRequest(http.MethodGet, transferBaseUrl+"/task/"+taskID+"/successful_transfers", nil)
 	if err != nil {
@@ -235,7 +235,7 @@ func TransferGetTaskSuccessfulTransfers(client *http.Client, taskID string, mark
 	return transfers, err
 }
 
-// TODO: test!
+// retrieve the list of paths that were skipped because of the skip_source_errors flag being set to true
 func TransferGetTaskSkippedErrors(client *http.Client, taskID string, marker uint) (skips SkippedErrors, err error) {
 	req, err := http.NewRequest(http.MethodGet, transferBaseUrl+"/task/"+taskID+"/skipped_errors", nil)
 	if err != nil {
@@ -265,6 +265,28 @@ func TransferGetTaskSkippedErrors(client *http.Client, taskID string, marker uin
 	return skips, err
 }
 
+// provides details about why a task is paused - includes pause rules on source and destination collections
+// and per-task pause flags set by collection activity managers
+func TransferGetTaskPauseInfo(client *http.Client, taskID string) (info PauseInfoLimited, err error) {
+	resp, err := client.Get(transferBaseUrl + "/task/" + taskID + "/pause_info")
+	if err != nil {
+		return PauseInfoLimited{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return PauseInfoLimited{}, fmt.Errorf("Non-Succesful Status: %d - %s", resp.StatusCode, resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return PauseInfoLimited{}, err
+	}
+
+	err = json.Unmarshal(body, &info)
+	return info, err
+}
+
 // submits a transfer task to copy a folder recursively.
 // NOTE: the transfer follows all default params (aside from recursivity)
 func TransferFolderSync(client *http.Client, sourceEndpoint string, sourcePath string, destEndpoint string, destPath string) (TransferResult, error) {
@@ -288,10 +310,6 @@ func TransferFolderSync(client *http.Client, sourceEndpoint string, sourcePath s
 
 	// submit request
 	return TransferPostTask(client, transfer)
-}
-
-func TransferListTasks(client *http.Client) {
-	client.Get(transferBaseUrl + "/task_list")
 }
 
 // creates a list of scopes to access data on the specified Globus endpoints

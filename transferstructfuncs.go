@@ -2,7 +2,7 @@ package globus
 
 import "encoding/json"
 
-func (pauseInfo *PauseRuleLimited) UnmarshalJSON(data []byte) error {
+func (pauseRule *PauseRuleLimited) UnmarshalJSON(data []byte) error {
 	type innerRule PauseRuleLimited
 	inner := &innerRule{
 		PauseLs:         true,
@@ -16,6 +16,6 @@ func (pauseInfo *PauseRuleLimited) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	*pauseInfo = PauseRuleLimited(*inner)
+	*pauseRule = PauseRuleLimited(*inner)
 	return nil
 }

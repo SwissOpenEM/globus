@@ -220,7 +220,6 @@ type SkippedErrors struct {
 	Data []SkippedError `json:"DATA"`
 }
 
-// TODO: finish up this part
 type PauseRuleLimited struct {
 	DataType               string  `json:"DATA_TYPE"`
 	Id                     string  `json:"id"`

@@ -67,16 +67,46 @@ func TransferPostTask(client *http.Client, transfer Transfer) (result TransferRe
 	}
 	defer resp.Body.Close()
 
-	fmt.Printf("Transfer req - status: %s\n", resp.Status)
-
 	// read & return response
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return TransferResult{}, err
 	}
 
+	fmt.Printf("Transfer req - status: %s\n", resp.Status)
+	if resp.StatusCode == 403 {
+		var consent ConsentRequired
+		err = json.Unmarshal(body, &consent)
+		if err != nil {
+			return TransferResult{}, fmt.Errorf("unknown 403 forbidden error - status: %s, body: %s", resp.Status, body)
+		}
+		return TransferResult{}, fmt.Errorf("consent is required for the following scopes: %+v", consent.RequiredScopes)
+	}
+
 	err = json.Unmarshal(body, &result)
 	return result, err
+}
+
+func TransferCopyFile(client *http.Client, sourceEndpoint string, sourceFile string, destEndpoint string, destFile string) (TransferResult, error) {
+	// formulate request
+	transfer := Transfer{
+		CommonTransfer: CommonTransfer{
+			DataType:     "transfer",
+			SubmissionId: "",
+		},
+		SourceEndpoint:      sourceEndpoint,
+		DestinationEndpoint: destEndpoint,
+		Data: []TransferItem{
+			{
+				DataType:        "transfer_item",
+				SourcePath:      sourceFile,
+				DestinationPath: destFile,
+			},
+		},
+	}
+
+	// submit request
+	return TransferPostTask(client, transfer)
 }
 
 // submits a transfer task to copy a folder recursively.

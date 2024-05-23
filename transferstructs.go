@@ -85,6 +85,14 @@ type TransferResult struct {
 	RequestId    string `json:"requst_id"`
 }
 
+type ConsentRequired struct {
+	Code           string   `json:"code"`
+	Message        string   `json:"message"`
+	RequestId      string   `json:"request_id"`
+	RequiredScopes []string `json:"required_scopes"`
+	Resource       string   `json:"resource"`
+}
+
 type FatalError struct {
 	Code        string `json:"code"`
 	Description string `json:"description"`

@@ -29,4 +29,13 @@ func Execute() {
 	}
 }
 
-func init() {}
+func init() {
+	rootCmd.PersistentFlags().BoolP("auth-code-grant", "a", false, "enable authorization code based OAuth2 authentication")
+	rootCmd.PersistentFlags().String("client-id", "", "set client ID of application")
+	rootCmd.PersistentFlags().String("client-secret", "", "set client secret of application")
+	rootCmd.PersistentFlags().String("redirect-url", "", "set redirect url (only used in three-legged mode)")
+
+	rootCmd.MarkFlagRequired("client-id")
+	rootCmd.MarkFlagsMutuallyExclusive("client-secret", "auth-code-grant")
+	rootCmd.MarkFlagsRequiredTogether("auth-code-grant", "redirect-url")
+}

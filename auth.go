@@ -32,14 +32,16 @@ func AuthCreateServiceClient(ctx context.Context, clientID string, clientSecret 
 
 // This is a very basic function that returns an oauth2 config
 // with the token url hard-coded to the one provided by Globus.
-func AuthGenerateOauthClientConfig(ctx context.Context, clientID string, clientSecret string, authURL string, scopes []string) (conf oauth2.Config) {
+func AuthGenerateOauthClientConfig(ctx context.Context, clientID string, clientSecret string, redirectURL string, scopes []string) (conf oauth2.Config) {
 	conf = oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		Endpoint: oauth2.Endpoint{
 			TokenURL: authBaseUrl + "/oauth2/token",
-			AuthURL:  authURL,
+			AuthURL:  "https://auth.globus.org/v2/oauth2/authorize",
 		},
+		RedirectURL: redirectURL,
+		Scopes:      scopes,
 	}
 
 	return conf

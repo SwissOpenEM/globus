@@ -24,7 +24,7 @@ a raw struct.`,
 		authCodeGrant, _ := cmd.Flags().GetBool("auth-code-grant")
 		clientID, _ := cmd.Flags().GetString("client-id")
 		clientSecret, _ := cmd.Flags().GetString("client-secret")
-		authURL, _ := cmd.Flags().GetString("auth-url")
+		authURL, _ := cmd.Flags().GetString("redirect-url")
 		limit, _ := cmd.Flags().GetUint("limit")
 
 		if limit < 1 {
@@ -73,17 +73,8 @@ a raw struct.`,
 func init() {
 	rootCmd.AddCommand(getTaskListCmd)
 
-	getTaskListCmd.Flags().BoolP("auth-code-grant", "a", false, "enable authorization code based OAuth2 authentication")
-	getTaskListCmd.Flags().String("client-id", "", "set client ID of application")
-	getTaskListCmd.Flags().String("client-secret", "", "set client secret of application")
-	getTaskListCmd.Flags().String("auth-url", "", "set auth url (only used in three-legged mode)")
-
 	getTaskListCmd.Flags().Uint("offset", 0, "set the initial offset of the list for pagination (can't use with page)")
 	getTaskListCmd.Flags().Uint("limit", 50, "set the max. size of the requested list")
 	getTaskListCmd.Flags().Uint("page", 1, "set the page on the task list (can't use with offset)")
-
-	getTaskListCmd.MarkFlagRequired("client-id")
-	getTaskListCmd.MarkFlagRequired("client-secret")
-	getTaskListCmd.MarkFlagsRequiredTogether("auth-code-grant", "auth-url")
 	getTaskListCmd.MarkFlagsMutuallyExclusive("offset", "page")
 }

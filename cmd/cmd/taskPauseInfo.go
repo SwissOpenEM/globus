@@ -23,7 +23,7 @@ Note: only the task owner can request this information.`,
 		authCodeGrant, _ := cmd.Flags().GetBool("auth-code-grant")
 		clientID, _ := cmd.Flags().GetString("client-id")
 		clientSecret, _ := cmd.Flags().GetString("client-secret")
-		authURL, _ := cmd.Flags().GetString("auth-url")
+		authURL, _ := cmd.Flags().GetString("redirect-url")
 
 		if len(args) != 1 {
 			log.Fatal("incorrect argument count")
@@ -51,13 +51,5 @@ Note: only the task owner can request this information.`,
 
 func init() {
 	rootCmd.AddCommand(taskPauseInfoCmd)
-
 	taskPauseInfoCmd.Flags().BoolP("auth-code-grant", "a", false, "enable authorization code based OAuth2 authentication")
-	taskPauseInfoCmd.Flags().String("client-id", "", "set client ID of application")
-	taskPauseInfoCmd.Flags().String("client-secret", "", "set client secret of application")
-	taskPauseInfoCmd.Flags().String("auth-url", "", "set auth url (only used in three-legged mode)")
-
-	taskPauseInfoCmd.MarkFlagRequired("client-id")
-	taskPauseInfoCmd.MarkFlagRequired("client-secret")
-	taskPauseInfoCmd.MarkFlagsRequiredTogether("auth-code-grant", "auth-url")
 }

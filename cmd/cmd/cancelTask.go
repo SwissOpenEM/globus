@@ -26,7 +26,7 @@ for this to be successful.`,
 		authCodeGrant, _ := cmd.Flags().GetBool("auth-code-grant")
 		clientID, _ := cmd.Flags().GetString("client-id")
 		clientSecret, _ := cmd.Flags().GetString("client-secret")
-		authURL, _ := cmd.Flags().GetString("auth-url")
+		authURL, _ := cmd.Flags().GetString("redirect-url")
 
 		if len(args) != 1 {
 			log.Fatal("incorrect argument count")
@@ -54,13 +54,4 @@ for this to be successful.`,
 
 func init() {
 	rootCmd.AddCommand(cancelTaskCmd)
-
-	cancelTaskCmd.Flags().BoolP("auth-code-grant", "a", false, "enable authorization code based OAuth2 authentication")
-	cancelTaskCmd.Flags().String("client-id", "", "set client ID of application")
-	cancelTaskCmd.Flags().String("client-secret", "", "set client secret of application")
-	cancelTaskCmd.Flags().String("auth-url", "", "set auth url (only used in three-legged mode)")
-
-	cancelTaskCmd.MarkFlagRequired("client-id")
-	cancelTaskCmd.MarkFlagRequired("client-secret")
-	cancelTaskCmd.MarkFlagsRequiredTogether("auth-code-grant", "auth-url")
 }

@@ -9,7 +9,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-func login(authCodeGrant bool, clientID string, clientSecret string, authURL string, scopes []string) (*http.Client, error) {
+func login(authCodeGrant bool, clientID string, clientSecret string, redirectURL string, scopes []string) (*http.Client, error) {
 	ctx := context.Background()
 	var client *http.Client = nil
 	if authCodeGrant {
@@ -19,14 +19,14 @@ func login(authCodeGrant bool, clientID string, clientSecret string, authURL str
 		// script that will be installed and run by users on their devices" as registration type
 
 		// create config
-		conf := globus.AuthGenerateOauthClientConfig(ctx, clientID, clientSecret, authURL, scopes)
+		conf := globus.AuthGenerateOauthClientConfig(ctx, clientID, clientSecret, redirectURL, scopes)
 
 		// PKCE verifier
 		verifier := oauth2.GenerateVerifier()
 
 		// redirect user to consent page to ask for permission and obtain the code
 		url := conf.AuthCodeURL("state", oauth2.AccessTypeOffline, oauth2.S256ChallengeOption(verifier))
-		fmt.Printf("Visit the URL for the auth dialog: %v", url)
+		fmt.Printf("Visit the URL for the auth dialog: %v\n\nEnter the received code here: ", url)
 
 		// read-in and exchange code for token
 		var code string

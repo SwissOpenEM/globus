@@ -24,7 +24,7 @@ authenticated user has access to.`,
 		authCodeGrant, _ := cmd.Flags().GetBool("auth-code-grant")
 		clientID, _ := cmd.Flags().GetString("client-id")
 		clientSecret, _ := cmd.Flags().GetString("client-secret")
-		authURL, _ := cmd.Flags().GetString("auth-url")
+		authURL, _ := cmd.Flags().GetString("redirect-url")
 
 		if len(args) != 1 {
 			log.Fatal("incorrect argument count")
@@ -52,13 +52,5 @@ authenticated user has access to.`,
 
 func init() {
 	rootCmd.AddCommand(getTaskByIdCmd)
-
 	getTaskByIdCmd.Flags().BoolP("auth-code-grant", "a", false, "enable authorization code based OAuth2 authentication")
-	getTaskByIdCmd.Flags().String("client-id", "", "set client ID of application")
-	getTaskByIdCmd.Flags().String("client-secret", "", "set client secret of application")
-	getTaskByIdCmd.Flags().String("auth-url", "", "set auth url (only used in three-legged mode)")
-
-	getTaskByIdCmd.MarkFlagRequired("client-id")
-	getTaskByIdCmd.MarkFlagRequired("client-secret")
-	getTaskByIdCmd.MarkFlagsRequiredTogether("auth-code-grant", "auth-url")
 }

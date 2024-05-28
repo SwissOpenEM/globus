@@ -25,7 +25,7 @@ have the same checksum will not be copied.`,
 		authCodeGrant, _ := cmd.Flags().GetBool("auth-code-grant")
 		clientID, _ := cmd.Flags().GetString("client-id")
 		clientSecret, _ := cmd.Flags().GetString("client-secret")
-		authURL, _ := cmd.Flags().GetString("auth-url")
+		authURL, _ := cmd.Flags().GetString("redirect-url")
 
 		// getting transfer params
 		srcEndpoint, _ := cmd.Flags().GetString("src-endpoint")
@@ -57,12 +57,6 @@ have the same checksum will not be copied.`,
 func init() {
 	rootCmd.AddCommand(folderSyncCmd)
 
-	// auth. params
-	folderSyncCmd.Flags().BoolP("auth-code-grant", "a", false, "enable auth code grant mode (3-legged auth.)")
-	folderSyncCmd.Flags().String("client-id", "", "set client ID of application")
-	folderSyncCmd.Flags().String("client-secret", "", "set client secret of application")
-	folderSyncCmd.Flags().String("auth-url", "", "set auth url (only used in three-legged mode)")
-
 	// transfer params
 	folderSyncCmd.Flags().String("src-endpoint", "", "set source endpoint")
 	folderSyncCmd.Flags().String("src-path", "", "path on source endpoint to sync")
@@ -70,11 +64,9 @@ func init() {
 	folderSyncCmd.Flags().String("dest-path", "", "path on destination endpoint to sync to")
 
 	// mark flags as obligatory
-	folderSyncCmd.MarkFlagRequired("client-id")
-	folderSyncCmd.MarkFlagRequired("client-secret")
 	folderSyncCmd.MarkFlagRequired("src-endpoint")
 	folderSyncCmd.MarkFlagRequired("src-path")
 	folderSyncCmd.MarkFlagRequired("dest-endpoint")
 	folderSyncCmd.MarkFlagRequired("dest-path")
-	folderSyncCmd.MarkFlagsRequiredTogether("auth-code-grant", "auth-url")
+
 }

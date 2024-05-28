@@ -25,7 +25,7 @@ of the task, according to Globus docs.`,
 		authCodeGrant, _ := cmd.Flags().GetBool("auth-code-grant")
 		clientID, _ := cmd.Flags().GetString("client-id")
 		clientSecret, _ := cmd.Flags().GetString("client-secret")
-		authURL, _ := cmd.Flags().GetString("auth-url")
+		authURL, _ := cmd.Flags().GetString("redirect-url")
 		limit, _ := cmd.Flags().GetUint("limit")
 
 		if limit < 1 {
@@ -79,17 +79,8 @@ of the task, according to Globus docs.`,
 func init() {
 	rootCmd.AddCommand(listTaskEventsCmd)
 
-	listTaskEventsCmd.Flags().BoolP("auth-code-grant", "a", false, "enable authorization code based OAuth2 authentication")
-	listTaskEventsCmd.Flags().String("client-id", "", "set client ID of application")
-	listTaskEventsCmd.Flags().String("client-secret", "", "set client secret of application")
-	listTaskEventsCmd.Flags().String("auth-url", "", "set auth url (only used in three-legged mode)")
-
 	listTaskEventsCmd.Flags().Uint("offset", 0, "set the initial offset of the list for pagination (can't use with page)")
 	listTaskEventsCmd.Flags().Uint("limit", 50, "set the max. size of the requested list")
 	listTaskEventsCmd.Flags().Uint("page", 1, "set the page on the task list (can't use with offset)")
-
-	listTaskEventsCmd.MarkFlagRequired("client-id")
-	listTaskEventsCmd.MarkFlagRequired("client-secret")
-	listTaskEventsCmd.MarkFlagsRequiredTogether("auth-code-grant", "auth-url")
 	listTaskEventsCmd.MarkFlagsMutuallyExclusive("offset", "page")
 }

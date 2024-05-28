@@ -25,7 +25,7 @@ FAILED.`,
 		authCodeGrant, _ := cmd.Flags().GetBool("auth-code-grant")
 		clientID, _ := cmd.Flags().GetString("client-id")
 		clientSecret, _ := cmd.Flags().GetString("client-secret")
-		authURL, _ := cmd.Flags().GetString("redirect-url")
+		redirectURL, _ := cmd.Flags().GetString("redirect-url")
 
 		if len(args) != 1 {
 			log.Fatal("incorrect argument count")
@@ -36,7 +36,7 @@ FAILED.`,
 			"urn:globus:auth:scope:transfer.api.globus.org:all",
 		}
 
-		client, err := login(authCodeGrant, clientID, clientSecret, authURL, scopes)
+		client, err := login(authCodeGrant, clientID, clientSecret, redirectURL, scopes)
 		if err != nil {
 			log.Fatal()
 		}

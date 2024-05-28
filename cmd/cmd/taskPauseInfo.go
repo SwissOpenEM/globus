@@ -51,5 +51,4 @@ Note: only the task owner can request this information.`,
 
 func init() {
 	rootCmd.AddCommand(taskPauseInfoCmd)
-	taskPauseInfoCmd.Flags().BoolP("auth-code-grant", "a", false, "enable authorization code based OAuth2 authentication")
 }

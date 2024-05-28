@@ -52,5 +52,4 @@ authenticated user has access to.`,
 
 func init() {
 	rootCmd.AddCommand(getTaskByIdCmd)
-	getTaskByIdCmd.Flags().BoolP("auth-code-grant", "a", false, "enable authorization code based OAuth2 authentication")
 }

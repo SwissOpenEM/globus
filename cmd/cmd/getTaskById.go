@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/SwissOpenEM/globus"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +40,7 @@ authenticated user has access to.`,
 		}
 
 		// get task by id
-		transfer, err := globus.TransferGetTaskByID(client, taskId)
+		transfer, err := client.TransferGetTaskByID(taskId)
 		if err != nil {
 			log.Fatal(err)
 		}

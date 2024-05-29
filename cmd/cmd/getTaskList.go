@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/SwissOpenEM/globus"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +56,7 @@ a raw struct.`,
 		}
 
 		// get task list
-		transferList, err := globus.TransferGetTaskList(client, offset, limit)
+		transferList, err := client.TransferGetTaskList(offset, limit)
 		if err != nil {
 			log.Fatal(err)
 		}

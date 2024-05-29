@@ -9,7 +9,7 @@ import (
 
 // fetches a list of transfer tasks from Globus Transfer API
 // NOTE: the results are paginated using "offset" and "limit"
-func TransferGetTaskList(client *http.Client, offset uint, limit uint) (taskList TaskList, err error) {
+func (g GlobusClient) TransferGetTaskList(offset uint, limit uint) (taskList TaskList, err error) {
 	req, err := http.NewRequest(http.MethodGet, transferBaseUrl+"/task_list", nil)
 	if err != nil {
 		return TaskList{}, err
@@ -20,7 +20,7 @@ func TransferGetTaskList(client *http.Client, offset uint, limit uint) (taskList
 	q.Add("limit", fmt.Sprint(limit))
 	req.URL.RawQuery = q.Encode()
 
-	resp, err := client.Do(req)
+	resp, err := g.client.Do(req)
 	if err != nil {
 		return TaskList{}, err
 	}
@@ -40,8 +40,8 @@ func TransferGetTaskList(client *http.Client, offset uint, limit uint) (taskList
 }
 
 // fetches a specific transfer task from Globus Transfer API by its ID
-func TransferGetTaskByID(client *http.Client, taskID string) (task Task, err error) {
-	resp, err := client.Get(transferBaseUrl + "/task/" + taskID)
+func (g GlobusClient) TransferGetTaskByID(taskID string) (task Task, err error) {
+	resp, err := g.client.Get(transferBaseUrl + "/task/" + taskID)
 	if err != nil {
 		return Task{}, err
 	}
@@ -62,8 +62,8 @@ func TransferGetTaskByID(client *http.Client, taskID string) (task Task, err err
 }
 
 // cancels a task using its id
-func TransferCancelTaskByID(client *http.Client, taskID string) (result Result, err error) {
-	resp, err := client.Post(transferBaseUrl+"/task/"+taskID+"/cancel", "", nil)
+func (g GlobusClient) TransferCancelTaskByID(taskID string) (result Result, err error) {
+	resp, err := g.client.Post(transferBaseUrl+"/task/"+taskID+"/cancel", "", nil)
 	if err != nil {
 		return Result{}, err
 	}
@@ -85,8 +85,8 @@ func TransferCancelTaskByID(client *http.Client, taskID string) (result Result, 
 // removes a globus task
 // NOTE: this can be only used under specific conditions: task must be associated with a
 // a high assurance collection, must be either SUCCEEDED or FAILED.
-func TransferRemoveTaskByID(client *http.Client, taskID string) (result Result, err error) {
-	resp, err := client.Post(transferBaseUrl+"/task/"+taskID+"/remove", "", nil)
+func (g GlobusClient) TransferRemoveTaskByID(taskID string) (result Result, err error) {
+	resp, err := g.client.Post(transferBaseUrl+"/task/"+taskID+"/remove", "", nil)
 	if err != nil {
 		return Result{}, err
 	}
@@ -111,8 +111,8 @@ func TransferRemoveTaskByID(client *http.Client, taskID string) (result Result, 
 
 // lists task's events
 // NOTE: the history gets deleted after 30 days
-func TransferGetTaskEventList(client *http.Client, taskID string, offset uint, limit uint) (eventList EventList, err error) {
-	resp, err := client.Get(transferBaseUrl + "/task/" + taskID + "/event_list")
+func (g GlobusClient) TransferGetTaskEventList(taskID string, offset uint, limit uint) (eventList EventList, err error) {
+	resp, err := g.client.Get(transferBaseUrl + "/task/" + taskID + "/event_list")
 	if err != nil {
 		return EventList{}, err
 	}
@@ -132,7 +132,7 @@ func TransferGetTaskEventList(client *http.Client, taskID string, offset uint, l
 }
 
 // retrieve the list of successfully transfered files of a task
-func TransferGetTaskSuccessfulTransfers(client *http.Client, taskID string, marker uint) (transfers SuccessfulTransfers, err error) {
+func (g GlobusClient) TransferGetTaskSuccessfulTransfers(taskID string, marker uint) (transfers SuccessfulTransfers, err error) {
 	req, err := http.NewRequest(http.MethodGet, transferBaseUrl+"/task/"+taskID+"/successful_transfers", nil)
 	if err != nil {
 		return SuccessfulTransfers{}, err
@@ -142,7 +142,7 @@ func TransferGetTaskSuccessfulTransfers(client *http.Client, taskID string, mark
 	q.Add("marker", fmt.Sprint(marker))
 	req.URL.RawQuery = q.Encode()
 
-	resp, err := client.Do(req)
+	resp, err := g.client.Do(req)
 	if err != nil {
 		return SuccessfulTransfers{}, err
 	}
@@ -162,7 +162,7 @@ func TransferGetTaskSuccessfulTransfers(client *http.Client, taskID string, mark
 }
 
 // retrieve the list of paths that were skipped because of the skip_source_errors flag being set to true
-func TransferGetTaskSkippedErrors(client *http.Client, taskID string, marker uint) (skips SkippedErrors, err error) {
+func (g GlobusClient) TransferGetTaskSkippedErrors(taskID string, marker uint) (skips SkippedErrors, err error) {
 	req, err := http.NewRequest(http.MethodGet, transferBaseUrl+"/task/"+taskID+"/skipped_errors", nil)
 	if err != nil {
 		return SkippedErrors{}, err
@@ -172,7 +172,7 @@ func TransferGetTaskSkippedErrors(client *http.Client, taskID string, marker uin
 	q.Add("marker", fmt.Sprint(marker))
 	req.URL.RawQuery = q.Encode()
 
-	resp, err := client.Do(req)
+	resp, err := g.client.Do(req)
 	if err != nil {
 		return SkippedErrors{}, err
 	}
@@ -193,8 +193,8 @@ func TransferGetTaskSkippedErrors(client *http.Client, taskID string, marker uin
 
 // provides details about why a task is paused - includes pause rules on source and destination collections
 // and per-task pause flags set by collection activity managers
-func TransferGetTaskPauseInfo(client *http.Client, taskID string) (info PauseInfoLimited, err error) {
-	resp, err := client.Get(transferBaseUrl + "/task/" + taskID + "/pause_info")
+func (g GlobusClient) TransferGetTaskPauseInfo(taskID string) (info PauseInfoLimited, err error) {
+	resp, err := g.client.Get(transferBaseUrl + "/task/" + taskID + "/pause_info")
 	if err != nil {
 		return PauseInfoLimited{}, err
 	}

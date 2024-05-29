@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/SwissOpenEM/globus"
 	"github.com/spf13/cobra"
 )
 
@@ -42,7 +41,7 @@ for retrying their transfer.`,
 		}
 
 		// get task by id
-		skips, err := globus.TransferGetTaskSkippedErrors(client, taskId, marker)
+		skips, err := client.TransferGetTaskSkippedErrors(taskId, marker)
 		if err != nil {
 			log.Fatal(err)
 		}

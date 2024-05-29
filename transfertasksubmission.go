@@ -8,12 +8,12 @@ import (
 	"net/http"
 )
 
-func getSubmissionId(client *http.Client) (submissionId string, err error) {
-	if client == nil {
+func (c GlobusClient) getSubmissionId() (submissionId string, err error) {
+	if c.client == nil {
 		return "", fmt.Errorf("client is nil")
 	}
 
-	resp, err := client.Get(transferBaseUrl + "/submission_id")
+	resp, err := c.client.Get(transferBaseUrl + "/submission_id")
 	if err != nil {
 		return "", err
 	}
@@ -41,9 +41,9 @@ func getSubmissionId(client *http.Client) (submissionId string, err error) {
 // Submits a generic transfer request using a Transfer struct.
 // This function doesn't check whether the transfer struct is valid.
 // You don't need to set the submission id of the transfer, this function does that for you.
-func TransferPostTask(client *http.Client, transfer Transfer) (result TransferResult, err error) {
+func (c GlobusClient) TransferPostTask(transfer Transfer) (result TransferResult, err error) {
 	// get submission id for submission
-	submission_id, err := getSubmissionId(client)
+	submission_id, err := c.getSubmissionId()
 	if err != nil {
 		return TransferResult{}, err
 	}
@@ -57,7 +57,7 @@ func TransferPostTask(client *http.Client, transfer Transfer) (result TransferRe
 	}
 
 	// send request
-	resp, err := client.Post(
+	resp, err := c.client.Post(
 		transferBaseUrl+"/transfer",
 		"application/json",
 		bytes.NewBuffer(transferJSON),
@@ -87,7 +87,7 @@ func TransferPostTask(client *http.Client, transfer Transfer) (result TransferRe
 	return result, err
 }
 
-func TransferCopyFile(client *http.Client, sourceEndpoint string, sourceFile string, destEndpoint string, destFile string) (TransferResult, error) {
+func (c GlobusClient) TransferCopyFile(client *http.Client, sourceEndpoint string, sourceFile string, destEndpoint string, destFile string) (TransferResult, error) {
 	// formulate request
 	transfer := Transfer{
 		CommonTransfer: CommonTransfer{
@@ -106,12 +106,12 @@ func TransferCopyFile(client *http.Client, sourceEndpoint string, sourceFile str
 	}
 
 	// submit request
-	return TransferPostTask(client, transfer)
+	return c.TransferPostTask(transfer)
 }
 
 // submits a transfer task to copy a folder recursively.
 // NOTE: the transfer follows all default params (aside from recursivity)
-func TransferFolderSync(client *http.Client, sourceEndpoint string, sourcePath string, destEndpoint string, destPath string) (TransferResult, error) {
+func (c GlobusClient) TransferFolderSync(sourceEndpoint string, sourcePath string, destEndpoint string, destPath string) (TransferResult, error) {
 	// formulate request
 	transfer := Transfer{
 		CommonTransfer: CommonTransfer{
@@ -131,5 +131,5 @@ func TransferFolderSync(client *http.Client, sourceEndpoint string, sourcePath s
 	}
 
 	// submit request
-	return TransferPostTask(client, transfer)
+	return c.TransferPostTask(transfer)
 }

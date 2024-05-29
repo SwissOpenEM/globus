@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/SwissOpenEM/globus"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +42,7 @@ for this to be successful.`,
 		}
 
 		// cancel task
-		result, err := globus.TransferCancelTaskByID(client, taskId)
+		result, err := client.TransferCancelTaskByID(taskId)
 		if err != nil {
 			log.Fatal(err)
 		}

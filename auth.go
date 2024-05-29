@@ -13,7 +13,7 @@ const authBaseUrl = "https://auth.globus.org/v2"
 
 // Returns a two-legged (client credental) http client with oauth2 authentication.
 // The function can fail if the token acquisition check fails.
-func AuthCreateServiceClient(ctx context.Context, clientID string, clientSecret string, scopes []string) (client *http.Client, err error) {
+func AuthCreateServiceClient(ctx context.Context, clientID string, clientSecret string, scopes []string) (client GlobusClient, err error) {
 	conf := clientcredentials.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -24,10 +24,14 @@ func AuthCreateServiceClient(ctx context.Context, clientID string, clientSecret 
 	// token acquisition check
 	_, tokenError := conf.Token(ctx)
 	if tokenError != nil {
-		return nil, fmt.Errorf("error getting token for client: %s", tokenError.Error())
+		return GlobusClient{}, fmt.Errorf("error getting token for client: %s", tokenError.Error())
 	}
 
-	return conf.Client(ctx), nil
+	return GlobusClient{client: conf.Client(ctx)}, nil
+}
+
+func HttpClientToGlobusClient(client *http.Client) GlobusClient {
+	return GlobusClient{client: client}
 }
 
 // This is a very basic function that returns an oauth2 config

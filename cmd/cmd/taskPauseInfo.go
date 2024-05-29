@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/SwissOpenEM/globus"
 	"github.com/spf13/cobra"
 )
 
@@ -40,7 +39,7 @@ Note: only the task owner can request this information.`,
 		}
 
 		// get task info by id
-		info, err := globus.TransferGetTaskPauseInfo(client, taskId)
+		info, err := client.TransferGetTaskPauseInfo(taskId)
 		if err != nil {
 			log.Fatal(err)
 		}

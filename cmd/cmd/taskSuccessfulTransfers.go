@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/SwissOpenEM/globus"
 	"github.com/spf13/cobra"
 )
 
@@ -40,7 +39,7 @@ transfered files from the Globus API. It can only be used with completed tasks.`
 		}
 
 		// get task by id
-		transfers, err := globus.TransferGetTaskSuccessfulTransfers(client, taskId, marker)
+		transfers, err := client.TransferGetTaskSuccessfulTransfers(taskId, marker)
 		if err != nil {
 			log.Fatal(err)
 		}

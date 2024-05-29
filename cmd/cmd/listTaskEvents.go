@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/SwissOpenEM/globus"
 	"github.com/spf13/cobra"
 )
 
@@ -63,7 +62,7 @@ of the task, according to Globus docs.`,
 		}
 
 		// get event list of task
-		eventList, err := globus.TransferGetTaskEventList(client, taskId, offset, limit)
+		eventList, err := client.TransferGetTaskEventList(taskId, offset, limit)
 		if err != nil {
 			log.Fatal(err)
 		}

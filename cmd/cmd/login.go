@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/SwissOpenEM/globus-transfer-request"
+	"github.com/SwissOpenEM/globus"
 	"golang.org/x/oauth2"
 )
 

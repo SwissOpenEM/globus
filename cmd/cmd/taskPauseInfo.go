@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/SwissOpenEM/globus-transfer-request"
+	"github.com/SwissOpenEM/globus"
 	"github.com/spf13/cobra"
 )
 

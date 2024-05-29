@@ -1,4 +1,6 @@
-# Globus Transfer Request Library
-This library should provide a way for an app to request transfers from Globus after authentication.
+# Globus Go Library
+## Description
+This library should provide a way for an app to request and monitor transfers from Globus after authentication.
 
-This library uses the standard OAuth2 implementation for Go (github.com/golang/oauth2)
+For authentication with Globus, the standard OAuth2 implementation for Go is used (github.com/golang/oauth2).
+

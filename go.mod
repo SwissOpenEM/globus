@@ -1,4 +1,4 @@
-module github.com/SwissOpenEM/globus-transfer-request
+module github.com/SwissOpenEM/globus
 
 go 1.22.2
 

@@ -3,6 +3,7 @@ package globus
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -80,7 +81,7 @@ func (c GlobusClient) TransferPostTask(transfer Transfer) (result TransferResult
 		if err != nil {
 			return TransferResult{}, fmt.Errorf("unknown 403 forbidden error - status: %s, body: %s", resp.Status, body)
 		}
-		return TransferResult{}, fmt.Errorf("consent is required for the following scopes: %+v", consent.RequiredScopes)
+		return TransferResult{}, fmt.Errorf("consent is required: %+v", consent)
 	}
 
 	err = json.Unmarshal(body, &result)
@@ -131,5 +132,35 @@ func (c GlobusClient) TransferFolderSync(sourceEndpoint string, sourcePath strin
 	}
 
 	// submit request
+	return c.TransferPostTask(transfer)
+}
+
+func (c GlobusClient) TransferFileList(sourceEndpoint string, sourcePath string, destEndpoint string, destPath string, fileList []string, isSymlink []bool) (TransferResult, error) {
+	if len(isSymlink) > 0 && len(fileList) != len(isSymlink) {
+		return TransferResult{}, errors.New("isSymlink list is defined and is not the same length as fileList")
+	}
+	var tItems []TransferItem
+	for i, file := range fileList {
+		itemType := "transfer_item"
+		if len(isSymlink) > 0 && isSymlink[i] {
+			itemType = "transfer_symlink_item"
+		}
+		tItems = append(tItems, TransferItem{
+			DataType:        itemType,
+			SourcePath:      sourcePath + file,
+			DestinationPath: destPath + file,
+		})
+	}
+
+	transfer := Transfer{
+		CommonTransfer: CommonTransfer{
+			DataType:     "transfer",
+			SubmissionId: "",
+		},
+		SourceEndpoint:      sourceEndpoint,
+		DestinationEndpoint: destEndpoint,
+		Data:                tItems,
+	}
+
 	return c.TransferPostTask(transfer)
 }

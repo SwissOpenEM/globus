@@ -4,7 +4,7 @@ type TransferItem struct {
 	DataType        string `json:"DATA_TYPE"` // = "tranfer_item" OR "transfer_symlink_item"
 	SourcePath      string `json:"source_path"`
 	DestinationPath string `json:"destination_path"`
-	// optionals
+	// optionals (they don't apply to transfer_symlink_item!)
 	Recursive         *bool   `json:"recursive,omitempty"`
 	ExternalChecksum  *string `json:"external_checksum,omitempty"`
 	ChecksumAlgorithm *string `json:"checksum_algorithm,omitempty"`

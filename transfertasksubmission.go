@@ -113,12 +113,13 @@ func (c GlobusClient) TransferCopyFile(client *http.Client, sourceEndpoint strin
 
 // submits a transfer task to copy a folder recursively.
 // NOTE: the transfer follows all default params (aside from recursivity)
-func (c GlobusClient) TransferFolderSync(sourceEndpoint string, sourcePath string, destEndpoint string, destPath string) (TransferResult, error) {
+func (c GlobusClient) TransferFolderSync(sourceEndpoint string, sourcePath string, destEndpoint string, destPath string, storeBasePath bool) (TransferResult, error) {
 	// formulate request
 	transfer := Transfer{
 		CommonTransfer: CommonTransfer{
-			DataType:     "transfer",
-			SubmissionId: "",
+			DataType:          "transfer",
+			SubmissionId:      "",
+			StoreBasePathInfo: boolPointer(true),
 		},
 		SourceEndpoint:      sourceEndpoint,
 		DestinationEndpoint: destEndpoint,
@@ -127,7 +128,7 @@ func (c GlobusClient) TransferFolderSync(sourceEndpoint string, sourcePath strin
 				DataType:        "transfer_item",
 				SourcePath:      sourcePath,
 				DestinationPath: destPath,
-				Recursive:       boolPointer(true),
+				Recursive:       boolPointer(storeBasePath),
 			},
 		},
 	}
@@ -136,7 +137,7 @@ func (c GlobusClient) TransferFolderSync(sourceEndpoint string, sourcePath strin
 	return c.TransferPostTask(transfer)
 }
 
-func (c GlobusClient) TransferFileList(sourceEndpoint string, sourcePath string, destEndpoint string, destPath string, fileList []string, isSymlink []bool) (TransferResult, error) {
+func (c GlobusClient) TransferFileList(sourceEndpoint string, sourcePath string, destEndpoint string, destPath string, fileList []string, isSymlink []bool, storeBasePath bool) (TransferResult, error) {
 	if len(isSymlink) > 0 && len(fileList) != len(isSymlink) {
 		return TransferResult{}, errors.New("isSymlink list is defined and is not the same length as fileList")
 	}
@@ -155,8 +156,9 @@ func (c GlobusClient) TransferFileList(sourceEndpoint string, sourcePath string,
 
 	transfer := Transfer{
 		CommonTransfer: CommonTransfer{
-			DataType:     "transfer",
-			SubmissionId: "",
+			DataType:          "transfer",
+			SubmissionId:      "",
+			StoreBasePathInfo: boolPointer(storeBasePath),
 		},
 		SourceEndpoint:      sourceEndpoint,
 		DestinationEndpoint: destEndpoint,

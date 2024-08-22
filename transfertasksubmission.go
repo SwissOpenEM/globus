@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 )
 
 func (c GlobusClient) getSubmissionId() (submissionId string, err error) {
@@ -149,8 +150,8 @@ func (c GlobusClient) TransferFileList(sourceEndpoint string, sourcePath string,
 		}
 		tItems = append(tItems, TransferItem{
 			DataType:        itemType,
-			SourcePath:      sourcePath + file,
-			DestinationPath: destPath + file,
+			SourcePath:      filepath.Join(sourcePath, file),
+			DestinationPath: filepath.Join(destPath, file),
 		})
 	}
 

@@ -46,7 +46,7 @@ have the same checksum will not be copied.`,
 		}
 
 		// Transfer - Sync folders
-		result, err := client.TransferFolderSync(srcEndpoint, srcPath, destEndpoint, destPath)
+		result, err := client.TransferFolderSync(srcEndpoint, srcPath, destEndpoint, destPath, true)
 		if err != nil {
 			log.Fatal(err)
 		}

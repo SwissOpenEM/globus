@@ -64,7 +64,7 @@ not be copied. This command does *not* support symlinks.`,
 		}
 
 		// Transfer - Sync folders                                                                                                        )
-		result, err := client.TransferFileList(srcEndpoint, srcPath, destEndpoint, destPath, files, []bool{})
+		result, err := client.TransferFileList(srcEndpoint, srcPath, destEndpoint, destPath, files, []bool{}, true)
 		if err != nil {
 			log.Fatal(err)
 		}

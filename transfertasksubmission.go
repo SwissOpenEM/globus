@@ -119,7 +119,7 @@ func (c GlobusClient) TransferFolderSync(sourceEndpoint string, sourcePath strin
 		CommonTransfer: CommonTransfer{
 			DataType:          "transfer",
 			SubmissionId:      "",
-			StoreBasePathInfo: boolPointer(true),
+			StoreBasePathInfo: boolPointer(storeBasePath),
 		},
 		SourceEndpoint:      sourceEndpoint,
 		DestinationEndpoint: destEndpoint,
@@ -128,7 +128,7 @@ func (c GlobusClient) TransferFolderSync(sourceEndpoint string, sourcePath strin
 				DataType:        "transfer_item",
 				SourcePath:      sourcePath,
 				DestinationPath: destPath,
-				Recursive:       boolPointer(storeBasePath),
+				Recursive:       boolPointer(true),
 			},
 		},
 	}

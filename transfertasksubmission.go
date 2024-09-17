@@ -78,11 +78,11 @@ func (c GlobusClient) TransferPostTask(transfer Transfer) (result TransferResult
 		var consent ConsentRequired
 		err = json.Unmarshal(body, &consent)
 		if err != nil {
-			return TransferResult{}, fmt.Errorf("unknown 403 forbidden error - status: %s, body: \"%s\"", resp.Status, body)
+			return TransferResult{}, fmt.Errorf("unknown 403 forbidden error - status: %s, body: \"%s\"", resp.Status, string(body))
 		}
 		return TransferResult{}, fmt.Errorf("consent is required: %+v", consent)
 	} else if resp.StatusCode != 200 {
-		return TransferResult{}, fmt.Errorf("unknown http code %d, body: \"%v\"", resp.StatusCode, body)
+		return TransferResult{}, fmt.Errorf("unknown http code %d, body: \"%s\"", resp.StatusCode, string(body))
 	}
 
 	err = json.Unmarshal(body, &result)

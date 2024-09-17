@@ -36,8 +36,10 @@ func login(authCodeGrant bool, clientID string, clientSecret string, redirectURL
 			return globus.GlobusClient{}, err
 		}
 
-		// create client
-		client := conf.Client(ctx, tok)
+		// setup auto-refresh & create client
+		ts := conf.TokenSource(ctx, tok)
+		client := oauth2.NewClient(ctx, ts)
+
 		return globus.HttpClientToGlobusClient(client), nil
 	} else {
 		// 2-legged OAuth2 authentication - client software authenticates as itself
